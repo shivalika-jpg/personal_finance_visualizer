@@ -5,8 +5,9 @@ import { Transaction } from '@/types/transaction';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const client = await clientPromise;
     const db = client.db('personal-finance');
@@ -20,7 +21,7 @@ export async function PUT(
     };
     
     const result = await db.collection('transactions').updateOne(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(id) },
       { $set: updateData }
     );
     
@@ -37,14 +38,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const client = await clientPromise;
     const db = client.db('personal-finance');
     
     const result = await db.collection('transactions').deleteOne({
-      _id: new ObjectId(params.id)
+      _id: new ObjectId(id)
     });
     
     if (result.deletedCount === 0) {

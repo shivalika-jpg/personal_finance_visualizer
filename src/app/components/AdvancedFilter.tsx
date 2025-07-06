@@ -34,7 +34,7 @@ const AdvancedFilter: React.FC<AdvancedFilterProps> = ({ onFilterChange, onReset
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    let processedValue: any = value;
+    let processedValue: string | number | undefined = value;
 
     // Convert empty strings to undefined for number fields
     if ((name === 'minAmount' || name === 'maxAmount') && value === '') {
@@ -209,7 +209,7 @@ const AdvancedFilter: React.FC<AdvancedFilterProps> = ({ onFilterChange, onReset
                 <div className="filter-tags">
                   {filters.searchTerm && (
                     <span className="filter-tag">
-                      Search: "{filters.searchTerm}"
+                      Search: &quot;{filters.searchTerm}&quot;
                     </span>
                   )}
                   {filters.type !== 'all' && (

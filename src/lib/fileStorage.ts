@@ -37,11 +37,11 @@ export async function getTransactions(): Promise<Transaction[]> {
   await initializeFiles();
   const data = await fs.readFile(TRANSACTIONS_FILE, 'utf-8');
   const transactions = JSON.parse(data);
-  return transactions.map((t: any) => ({
+  return transactions.map((t: Record<string, unknown>) => ({
     ...t,
-    date: new Date(t.date),
-    createdAt: t.createdAt ? new Date(t.createdAt) : undefined,
-    updatedAt: t.updatedAt ? new Date(t.updatedAt) : undefined,
+    date: new Date(t.date as string),
+    createdAt: t.createdAt ? new Date(t.createdAt as string) : undefined,
+    updatedAt: t.updatedAt ? new Date(t.updatedAt as string) : undefined,
   }));
 }
 
@@ -95,10 +95,10 @@ export async function getBudgets(): Promise<Budget[]> {
   await initializeFiles();
   const data = await fs.readFile(BUDGETS_FILE, 'utf-8');
   const budgets = JSON.parse(data);
-  return budgets.map((b: any) => ({
+  return budgets.map((b: Record<string, unknown>) => ({
     ...b,
-    createdAt: b.createdAt ? new Date(b.createdAt) : undefined,
-    updatedAt: b.updatedAt ? new Date(b.updatedAt) : undefined,
+    createdAt: b.createdAt ? new Date(b.createdAt as string) : undefined,
+    updatedAt: b.updatedAt ? new Date(b.updatedAt as string) : undefined,
   }));
 }
 

@@ -3,7 +3,6 @@ import { BudgetForm, Budget } from '@/types/transaction';
 
 interface BudgetManagerProps {
   onAddBudget: (budget: BudgetForm) => void;
-  onUpdateBudget: (id: string, budget: BudgetForm) => void;
   onDeleteBudget: (id: string) => void;
   refreshTrigger?: number;
 }
@@ -25,7 +24,7 @@ const CATEGORIES = [
   'Other'
 ];
 
-const BudgetManager: React.FC<BudgetManagerProps> = ({ onAddBudget, onUpdateBudget, onDeleteBudget, refreshTrigger }) => {
+const BudgetManager: React.FC<BudgetManagerProps> = ({ onAddBudget, onDeleteBudget, refreshTrigger }) => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [formData, setFormData] = useState<BudgetForm>({
     category: '',

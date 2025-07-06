@@ -42,9 +42,9 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ refreshTrigger }) => {
     return [`$${value.toFixed(2)}`, name];
   };
 
-  const renderCustomizedLabel = (entry: any) => {
+  const renderCustomizedLabel = (entry: { percent?: number }) => {
     const percent = entry.percent;
-    if (percent < 0.05) return ''; // Don't show label for slices smaller than 5%
+    if (!percent || percent < 0.05) return ''; // Don't show label for slices smaller than 5%
     return `${(percent * 100).toFixed(0)}%`;
   };
 

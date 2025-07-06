@@ -48,7 +48,7 @@ const MonthlyExpensesChart: React.FC<MonthlyExpensesChartProps> = ({ refreshTrig
     fetchData();
   }, [refreshTrigger]);
 
-  const formatTooltip = (value: number, name: string) => {
+  const formatTooltip = (value: number) => {
     return [`$${value.toFixed(2)}`, 'Total Expenses'];
   };
 

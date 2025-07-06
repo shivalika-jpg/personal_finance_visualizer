@@ -16,7 +16,15 @@ export default function Home() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
-  const [filters, setFilters] = useState<FilterOptions>({});
+  const [, setFilters] = useState<FilterOptions>({
+    startDate: '',
+    endDate: '',
+    category: '',
+    type: 'all',
+    minAmount: undefined,
+    maxAmount: undefined,
+    searchTerm: ''
+  });
 
   const handleSubmitTransaction = async (formData: TransactionForm) => {
     try {
@@ -51,7 +59,7 @@ export default function Home() {
     setEditingTransaction(transaction);
   };
 
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteTransaction = async () => {
     // Trigger refresh after deletion
     setRefreshTrigger(prev => prev + 1);
   };
@@ -83,27 +91,6 @@ export default function Home() {
     }
   };
 
-  const handleUpdateBudget = async (id: string, budgetData: BudgetForm) => {
-    try {
-      const response = await fetch(`/api/budgets/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(budgetData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update budget');
-      }
-
-      setRefreshTrigger(prev => prev + 1);
-      alert('Budget updated successfully!');
-    } catch (error) {
-      console.error('Error updating budget:', error);
-      alert('Failed to update budget');
-    }
-  };
 
   const handleDeleteBudget = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this budget?')) {
@@ -180,7 +167,6 @@ export default function Home() {
               <div className="budget-manager-section">
                 <BudgetManager
                   onAddBudget={handleAddBudget}
-                  onUpdateBudget={handleUpdateBudget}
                   onDeleteBudget={handleDeleteBudget}
                   refreshTrigger={refreshTrigger}
                 />

@@ -43,15 +43,6 @@ const BudgetVsActualChart: React.FC<BudgetVsActualChartProps> = ({ selectedMonth
     return `$${value}`;
   };
 
-  const getBarColor = (entry: BudgetComparison) => {
-    if (entry.actual > entry.budgeted) {
-      return '#dc3545'; // Red for over budget
-    } else if (entry.actual > entry.budgeted * 0.8) {
-      return '#ffc107'; // Yellow for near budget
-    } else {
-      return '#28a745'; // Green for under budget
-    }
-  };
 
   if (loading) {
     return (

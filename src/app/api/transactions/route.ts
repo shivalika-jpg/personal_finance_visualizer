@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 import { Transaction } from '@/types/transaction';
 
@@ -13,20 +12,21 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     
-    let filter: any = {};
+    const filter: Record<string, unknown> = {};
     
     if (category) {
       filter.category = category;
     }
     
     if (startDate || endDate) {
-      filter.date = {};
+      const dateFilter: Record<string, Date> = {};
       if (startDate) {
-        filter.date.$gte = new Date(startDate);
+        dateFilter.$gte = new Date(startDate);
       }
       if (endDate) {
-        filter.date.$lte = new Date(endDate);
+        dateFilter.$lte = new Date(endDate);
       }
+      filter.date = dateFilter;
     }
     
     const transactions = await db
@@ -56,7 +56,15 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     };
     
-    const result = await db.collection('transactions').insertOne(transaction);
+    const result = await db.collection('transactions').insertOne({
+      type: transaction.type,
+      amount: transaction.amount,
+      description: transaction.description,
+      category: transaction.category,
+      date: transaction.date,
+      createdAt: transaction.createdAt,
+      updatedAt: transaction.updatedAt
+    });
     
     return NextResponse.json({ _id: result.insertedId, ...transaction });
   } catch (error) {

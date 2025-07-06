@@ -12,19 +12,20 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     
-    let filter: any = {};
+    const filter: Record<string, unknown> = {};
     
     if (startDate || endDate) {
-      filter.date = {};
+      const dateFilter: Record<string, Date> = {};
       if (startDate) {
-        filter.date.$gte = new Date(startDate);
+        dateFilter.$gte = new Date(startDate);
       }
       if (endDate) {
-        filter.date.$lte = new Date(endDate);
+        dateFilter.$lte = new Date(endDate);
       }
+      filter.date = dateFilter;
     }
     
-    let data: any = {};
+    const data: Record<string, unknown> = {};
     
     if (type === 'transactions' || type === 'all') {
       const transactions = await db
@@ -50,14 +51,14 @@ export async function GET(request: NextRequest) {
       
       if (data.transactions) {
         csvContent += 'Type,Amount,Date,Description,Category,Created At\n';
-        data.transactions.forEach((transaction: any) => {
+        (data.transactions as Record<string, unknown>[]).forEach((transaction: Record<string, unknown>) => {
           const row = [
             transaction.type,
             transaction.amount,
-            new Date(transaction.date).toISOString().split('T')[0],
-            `"${transaction.description.replace(/"/g, '""')}"`,
+            new Date(transaction.date as string).toISOString().split('T')[0],
+            `"${(transaction.description as string || '').replace(/"/g, '""')}"`,
             transaction.category,
-            new Date(transaction.createdAt).toISOString()
+            new Date(transaction.createdAt as string).toISOString()
           ].join(',');
           csvContent += row + '\n';
         });
@@ -66,12 +67,12 @@ export async function GET(request: NextRequest) {
       if (data.budgets) {
         if (csvContent) csvContent += '\n\n';
         csvContent += 'Category,Amount,Month,Created At\n';
-        data.budgets.forEach((budget: any) => {
+        (data.budgets as Record<string, unknown>[]).forEach((budget: Record<string, unknown>) => {
           const row = [
             budget.category,
             budget.amount,
             budget.month,
-            new Date(budget.createdAt).toISOString()
+            new Date(budget.createdAt as string).toISOString()
           ].join(',');
           csvContent += row + '\n';
         });

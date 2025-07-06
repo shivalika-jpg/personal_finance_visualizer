@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 import { Budget } from '@/types/transaction';
 
@@ -12,7 +11,7 @@ export async function GET(request: NextRequest) {
     const month = searchParams.get('month');
     const category = searchParams.get('category');
     
-    let filter: any = {};
+    const filter: Record<string, unknown> = {};
     
     if (month) {
       filter.month = month;
@@ -58,7 +57,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Budget already exists for this category and month' }, { status: 400 });
     }
     
-    const result = await db.collection('budgets').insertOne(budget);
+    const result = await db.collection('budgets').insertOne({
+      category: budget.category,
+      amount: budget.amount,
+      month: budget.month,
+      createdAt: budget.createdAt,
+      updatedAt: budget.updatedAt
+    });
     
     return NextResponse.json({ _id: result.insertedId, ...budget });
   } catch (error) {

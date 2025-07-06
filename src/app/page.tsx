@@ -1,94 +1,262 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+
+import React, { useState } from 'react';
+import TransactionFormComponent from './components/TransactionForm';
+import TransactionList from './components/TransactionList';
+import MonthlyExpensesChart from './components/MonthlyExpensesChart';
+import CategoryChart from './components/CategoryChart';
+import Dashboard from './components/Dashboard';
+import BudgetManager from './components/BudgetManager';
+import BudgetVsActualChart from './components/BudgetVsActualChart';
+import AdvancedFilter from './components/AdvancedFilter';
+import ExportData from './components/ExportData';
+import { Transaction, TransactionForm, BudgetForm, FilterOptions } from '@/types/transaction';
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [filters, setFilters] = useState<FilterOptions>({});
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const handleSubmitTransaction = async (formData: TransactionForm) => {
+    try {
+      const url = editingTransaction 
+        ? `/api/transactions/${editingTransaction._id}`
+        : '/api/transactions';
+      
+      const method = editingTransaction ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save transaction');
+      }
+
+      // Reset editing state and trigger refresh
+      setEditingTransaction(null);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      alert('Failed to save transaction. Please try again.');
+    }
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+  };
+
+  const handleDeleteTransaction = (id: string) => {
+    // Trigger refresh after deletion
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTransaction(null);
+  };
+
+  const handleAddBudget = async (budgetData: BudgetForm) => {
+    try {
+      const response = await fetch('/api/budgets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(budgetData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create budget');
+      }
+
+      setRefreshTrigger(prev => prev + 1);
+      alert('Budget created successfully!');
+    } catch (error) {
+      console.error('Error creating budget:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create budget');
+    }
+  };
+
+  const handleUpdateBudget = async (id: string, budgetData: BudgetForm) => {
+    try {
+      const response = await fetch(`/api/budgets/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(budgetData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update budget');
+      }
+
+      setRefreshTrigger(prev => prev + 1);
+      alert('Budget updated successfully!');
+    } catch (error) {
+      console.error('Error updating budget:', error);
+      alert('Failed to update budget');
+    }
+  };
+
+  const handleDeleteBudget = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this budget?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/budgets/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete budget');
+      }
+
+      setRefreshTrigger(prev => prev + 1);
+      alert('Budget deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting budget:', error);
+      alert('Failed to delete budget');
+    }
+  };
+
+  const handleFilterChange = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+  };
+
+  const handleFilterReset = () => {
+    setFilters({});
+  };
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="content-grid-stage3">
+            <div className="dashboard-section">
+              <Dashboard refreshTrigger={refreshTrigger} />
+            </div>
+
+            <div className="form-section">
+              <TransactionFormComponent
+                onSubmit={handleSubmitTransaction}
+                editingTransaction={editingTransaction}
+                onCancel={handleCancelEdit}
+              />
+            </div>
+
+            <div className="charts-section">
+              <div className="charts-grid">
+                <MonthlyExpensesChart refreshTrigger={refreshTrigger} />
+                <CategoryChart refreshTrigger={refreshTrigger} />
+              </div>
+            </div>
+
+            <div className="list-section">
+              <AdvancedFilter
+                onFilterChange={handleFilterChange}
+                onReset={handleFilterReset}
+              />
+              <TransactionList
+                onEdit={handleEditTransaction}
+                onDelete={handleDeleteTransaction}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
+          </div>
+        );
+
+      case 'budgets':
+        return (
+          <div className="budget-content">
+            <div className="budget-grid">
+              <div className="budget-manager-section">
+                <BudgetManager
+                  onAddBudget={handleAddBudget}
+                  onUpdateBudget={handleUpdateBudget}
+                  onDeleteBudget={handleDeleteBudget}
+                  refreshTrigger={refreshTrigger}
+                />
+              </div>
+              <div className="budget-chart-section">
+                <BudgetVsActualChart refreshTrigger={refreshTrigger} />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'analytics':
+        return (
+          <div className="analytics-content">
+            <div className="analytics-grid">
+              <MonthlyExpensesChart refreshTrigger={refreshTrigger} />
+              <CategoryChart refreshTrigger={refreshTrigger} />
+              <BudgetVsActualChart refreshTrigger={refreshTrigger} />
+            </div>
+          </div>
+        );
+
+      case 'export':
+        return (
+          <div className="export-content">
+            <ExportData />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <h1>Personal Finance Visualizer</h1>
+        <p>Track your expenses, manage budgets, and visualize your spending patterns</p>
+      </header>
+
+      <nav className="app-navigation">
+        <div className="nav-tabs">
+          <button
+            className={`nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
+            📊 Overview
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'budgets' ? 'active' : ''}`}
+            onClick={() => setActiveTab('budgets')}
           >
-            Read our docs
-          </a>
+            💰 Budgets
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            📈 Analytics
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'export' ? 'active' : ''}`}
+            onClick={() => setActiveTab('export')}
+          >
+            📥 Export
+          </button>
         </div>
+      </nav>
+
+      <main className="app-main">
+        {renderTabContent()}
       </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer className="app-footer">
+        <p>&copy; 2024 Personal Finance Visualizer - Stage 3 Complete</p>
       </footer>
     </div>
   );
